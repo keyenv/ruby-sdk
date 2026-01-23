@@ -12,11 +12,15 @@ module KeyEnv
     # @return [Hash, nil] Additional error details
     attr_reader :details
 
+    # @return [String] Original error message
+    attr_reader :original_message
+
     # @param message [String] Error message
     # @param status [Integer] HTTP status code (default: 0)
     # @param code [String, nil] Error code from API
     # @param details [Hash, nil] Additional error details
     def initialize(message, status: 0, code: nil, details: nil)
+      @original_message = message
       @status = status
       @code = code
       @details = details || {}
@@ -25,9 +29,9 @@ module KeyEnv
 
     def to_s
       if status.positive?
-        "KeyEnvError(#{status}): #{message}"
+        "KeyEnvError(#{status}): #{@original_message}"
       else
-        "KeyEnvError: #{message}"
+        "KeyEnvError: #{@original_message}"
       end
     end
   end
