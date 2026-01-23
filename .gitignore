@@ -1,0 +1,30 @@
+# Gem files
+*.gem
+pkg/
+
+# Bundler
+.bundle/
+vendor/bundle/
+Gemfile.lock
+
+# RSpec
+.rspec_status
+coverage/
+
+# Documentation
+doc/
+.yardoc/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
