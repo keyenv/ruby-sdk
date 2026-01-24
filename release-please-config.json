@@ -1,0 +1,8 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "ruby",
+      "bump-minor-pre-major": true
+    }
+  }
+}
