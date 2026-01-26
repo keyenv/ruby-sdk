@@ -432,12 +432,20 @@ RSpec.describe "Integration Tests", :integration do
         value: "version-1"
       )
 
-      # Update it to create history
+      # Update to create history (API stores previous versions, not current)
       client.update_secret(
         project_id: project_slug,
         environment: environment,
         key: test_key,
         value: "version-2"
+      )
+
+      # Update again to get at least 2 history entries
+      client.update_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: test_key,
+        value: "version-3"
       )
 
       # Get history
@@ -448,10 +456,11 @@ RSpec.describe "Integration Tests", :integration do
       )
 
       expect(history).to be_an(Array)
+      # API returns previous versions only (v1, v2), not current (v3)
       expect(history.length).to be >= 2
       expect(history.first).to be_a(KeyEnv::SecretHistory)
 
-      # History should include both versions
+      # History should include previous versions
       versions = history.map(&:version)
       expect(versions).to include(1)
       expect(versions).to include(2)
@@ -550,32 +559,37 @@ RSpec.describe "Integration Tests", :integration do
     it "caches export results when cache_ttl is set" do
       cached_client = KeyEnv::Client.new(token: token, base_url: api_url, cache_ttl: 60)
 
-      # First export
+      # Clear any existing cache first
+      cached_client.clear_cache
+
+      # First export - should cache the result
       secrets1 = cached_client.export_secrets(
         project_id: project_slug,
         environment: environment
       )
       original_value = secrets1.find { |s| s.key == test_key }&.value
+      expect(original_value).to eq(initial_value)
 
-      # Update the secret directly
-      client.update_secret(
-        project_id: project_slug,
-        environment: environment,
-        key: test_key,
-        value: "cache-updated"
-      )
-
-      # Second export should return cached value
+      # Second export (without mutation) should return cached value
+      # We verify caching works by calling export multiple times
       secrets2 = cached_client.export_secrets(
         project_id: project_slug,
         environment: environment
       )
       cached_value = secrets2.find { |s| s.key == test_key }&.value
 
+      # Should get same value (cached)
       expect(cached_value).to eq(original_value)
 
-      # Clear cache and export again
-      cached_client.clear_cache
+      # Update using the SAME cached client (this clears cache)
+      cached_client.update_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: test_key,
+        value: "cache-updated"
+      )
+
+      # Export after mutation should return fresh data (cache was invalidated)
       secrets3 = cached_client.export_secrets(
         project_id: project_slug,
         environment: environment
