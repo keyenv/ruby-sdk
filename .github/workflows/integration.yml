@@ -3,9 +3,10 @@ name: Integration Tests
 on:
   workflow_dispatch:
     inputs:
-      project_id:
-        description: 'KeyEnv Project ID'
-        required: true
+      project:
+        description: 'KeyEnv Project Slug'
+        required: false
+        default: 'sdk-test'
         type: string
   schedule:
     # Run weekly on Sunday at midnight UTC
@@ -27,5 +28,6 @@ jobs:
       - name: Run integration tests
         run: bundle exec rspec --tag integration
         env:
-          KEYENV_SERVICE_TOKEN: ${{ secrets.KEYENV_SERVICE_TOKEN }}
-          KEYENV_PROJECT_ID: ${{ inputs.project_id || secrets.KEYENV_PROJECT_ID }}
+          KEYENV_API_URL: ${{ secrets.KEYENV_API_URL }}
+          KEYENV_TOKEN: ${{ secrets.KEYENV_TOKEN }}
+          KEYENV_PROJECT: ${{ inputs.project || 'sdk-test' }}

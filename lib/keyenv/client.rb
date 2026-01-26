@@ -29,13 +29,15 @@ module KeyEnv
     # @param token [String] Service token for authentication
     # @param timeout [Integer] Request timeout in seconds (default: 30)
     # @param cache_ttl [Integer] Cache TTL in seconds (default: 0 = disabled)
-    def initialize(token:, timeout: DEFAULT_TIMEOUT, cache_ttl: 0)
+    # @param base_url [String, nil] Custom API base URL (default: https://api.keyenv.dev)
+    def initialize(token:, timeout: DEFAULT_TIMEOUT, cache_ttl: 0, base_url: nil)
       raise ArgumentError, "KeyEnv token is required" if token.nil? || token.empty?
 
       @token = token
       @timeout = timeout
       @cache_ttl = cache_ttl.positive? ? cache_ttl : ENV.fetch("KEYENV_CACHE_TTL", "0").to_i
-      @base_uri = URI.parse(BASE_URL)
+      @base_url = base_url || ENV.fetch("KEYENV_API_URL", BASE_URL)
+      @base_uri = URI.parse(@base_url)
     end
 
     # =========================================================================
@@ -430,10 +432,10 @@ module KeyEnv
     private
 
     def request(method, path, body = nil)
-      uri = URI.join(BASE_URL, path)
+      uri = URI.join(@base_url, path)
 
       http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
+      http.use_ssl = uri.scheme == "https"
       http.open_timeout = @timeout
       http.read_timeout = @timeout
 

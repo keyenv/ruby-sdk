@@ -19,6 +19,15 @@ RSpec.configure do |config|
   config.before(:each) do
     KeyEnv::Client.secrets_cache.clear
   end
+
+  # Allow real HTTP connections for integration tests
+  config.before(:each, :integration) do
+    WebMock.allow_net_connect!
+  end
+
+  config.after(:each, :integration) do
+    WebMock.disable_net_connect!
+  end
 end
 
 # Helper to stub API responses
