@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/keyenv/ruby-sdk/compare/v1.1.0...v1.2.0) (2026-01-26)
+
+
+### Features
+
+* add integration tests for live API testing ([c4f47c2](https://github.com/keyenv/ruby-sdk/commit/c4f47c2aa94492975a9f50ebd78287f00c2069d7))
+* add tag-based release workflow for RubyGems ([736a6aa](https://github.com/keyenv/ruby-sdk/commit/736a6aa9ce190b0494e1c39c78820feba0e813a6))
+
+
+### Bug Fixes
+
+* correct error message formatting ([dbe213e](https://github.com/keyenv/ruby-sdk/commit/dbe213e2b59788a6189720e6dbb17bde03b13939))
+
 ## [1.0.0] - 2025-01-23
 
 ### Added
