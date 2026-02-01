@@ -19,13 +19,6 @@ module KeyEnv
     BASE_URL = "https://api.keyenv.dev"
     DEFAULT_TIMEOUT = 30
 
-    # Module-level cache for secrets (survives across warm serverless invocations)
-    @secrets_cache = {}
-
-    class << self
-      attr_accessor :secrets_cache
-    end
-
     # @param token [String] Service token for authentication
     # @param timeout [Integer] Request timeout in seconds (default: 30)
     # @param cache_ttl [Integer] Cache TTL in seconds (default: 0 = disabled)
@@ -38,6 +31,7 @@ module KeyEnv
       @cache_ttl = cache_ttl.positive? ? cache_ttl : ENV.fetch("KEYENV_CACHE_TTL", "0").to_i
       @base_url = base_url || ENV.fetch("KEYENV_API_URL", BASE_URL)
       @base_uri = URI.parse(@base_url)
+      @secrets_cache = {}
     end
 
     # =========================================================================
@@ -158,7 +152,7 @@ module KeyEnv
 
       # Check cache if TTL > 0
       if @cache_ttl.positive?
-        cached = self.class.secrets_cache[cache_key]
+        cached = @secrets_cache[cache_key]
         if cached
           secrets, expires_at = cached
           return secrets if Time.now.to_f < expires_at
@@ -170,7 +164,7 @@ module KeyEnv
 
       # Store in cache if TTL > 0
       if @cache_ttl.positive?
-        self.class.secrets_cache[cache_key] = [secrets, Time.now.to_f + @cache_ttl]
+        @secrets_cache[cache_key] = [secrets, Time.now.to_f + @cache_ttl]
       end
 
       secrets
@@ -314,8 +308,8 @@ module KeyEnv
 
       secrets.each do |secret|
         value = secret.value
-        if value.include?("\n") || value.include?('"') || value.include?("'") || value.include?(" ")
-          escaped = value.gsub("\\", "\\\\").gsub('"', '\\"')
+        if value.include?("\n") || value.include?('"') || value.include?("'") || value.include?(" ") || value.include?("$")
+          escaped = value.gsub("\\", "\\\\").gsub('"', '\\"').gsub("\n", "\\n").gsub("$", "\\$")
           lines << %(#{secret.key}="#{escaped}")
         else
           lines << "#{secret.key}=#{value}"
@@ -332,11 +326,11 @@ module KeyEnv
     def clear_cache(project_id: nil, environment: nil)
       if project_id && environment
         cache_key = "#{project_id}:#{environment}"
-        self.class.secrets_cache.delete(cache_key)
+        @secrets_cache.delete(cache_key)
       elsif project_id
-        self.class.secrets_cache.delete_if { |k, _| k.start_with?("#{project_id}:") }
+        @secrets_cache.delete_if { |k, _| k.start_with?("#{project_id}:") }
       else
-        self.class.secrets_cache.clear
+        @secrets_cache.clear
       end
     end
 

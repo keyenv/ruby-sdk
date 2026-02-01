@@ -15,11 +15,6 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
-  # Clear cache before each test
-  config.before(:each) do
-    KeyEnv::Client.secrets_cache.clear
-  end
-
   # Allow real HTTP connections for integration tests
   config.before(:each, :integration) do
     WebMock.allow_net_connect!

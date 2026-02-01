@@ -258,6 +258,42 @@ RSpec.describe KeyEnv::Client do
     end
   end
 
+  describe "#generate_env_file" do
+    it "escapes dollar signs in values" do
+      stub_keyenv_request(:get, "/api/v1/projects/proj_123/environments/production/secrets/export", response_body: {
+        "secrets" => [
+          { "id" => "sec_1", "environment_id" => "env_1", "key" => "DOLLAR_VAR", "value" => "price=$100", "version" => 1 },
+          { "id" => "sec_2", "environment_id" => "env_1", "key" => "SIMPLE", "value" => "no_special", "version" => 1 }
+        ]
+      })
+
+      content = client.generate_env_file(project_id: "proj_123", environment: "production")
+      expect(content).to include('DOLLAR_VAR="price=\$100"')
+      expect(content).to include("SIMPLE=no_special")
+    end
+  end
+
+  describe "cache isolation" do
+    it "different instances do not share cache" do
+      client1 = KeyEnv.new(token: "token_1", cache_ttl: 300)
+      client2 = KeyEnv.new(token: "token_2", cache_ttl: 300)
+
+      stub_keyenv_request(:get, "/api/v1/projects/proj_123/environments/production/secrets/export", response_body: {
+        "secrets" => [
+          { "id" => "sec_1", "environment_id" => "env_1", "key" => "VAR", "value" => "value1", "version" => 1 }
+        ]
+      })
+
+      client1.export_secrets(project_id: "proj_123", environment: "production")
+
+      # Clearing client1 cache should not affect client2
+      client1.clear_cache
+      expect(client1.instance_variable_get(:@secrets_cache)).to be_empty
+      # client2 should still have its own empty cache (never populated)
+      expect(client2.instance_variable_get(:@secrets_cache)).to be_empty
+    end
+  end
+
   describe "caching" do
     it "caches secrets when cache_ttl is set" do
       client_with_cache = KeyEnv.new(token: "test_token", cache_ttl: 300)
