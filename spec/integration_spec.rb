@@ -410,6 +410,188 @@ RSpec.describe "Integration Tests", :integration do
         expect(secret.value).to eq("bulk-value-#{i + 1}")
       end
     end
+
+    it "skips existing secrets with overwrite false" do
+      # Create a secret first
+      client.create_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: bulk_keys[0],
+        value: "original-value"
+      )
+
+      # Bulk import the same key with overwrite: false
+      result = client.bulk_import(
+        project_id: project_slug,
+        environment: environment,
+        secrets: [
+          KeyEnv::BulkSecretItem.new(key: bulk_keys[0], value: "new-value")
+        ],
+        overwrite: false
+      )
+
+      expect(result).to be_a(KeyEnv::BulkImportResult)
+      expect(result.skipped).to eq(1)
+
+      # Verify the original value was NOT overwritten
+      secret = client.get_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: bulk_keys[0]
+      )
+      expect(secret.value).to eq("original-value")
+    end
+
+    it "overwrites existing secrets with overwrite true" do
+      # Create a secret first
+      client.create_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: bulk_keys[0],
+        value: "original-value"
+      )
+
+      # Bulk import the same key with overwrite: true
+      result = client.bulk_import(
+        project_id: project_slug,
+        environment: environment,
+        secrets: [
+          KeyEnv::BulkSecretItem.new(key: bulk_keys[0], value: "overwritten-value")
+        ],
+        overwrite: true
+      )
+
+      expect(result).to be_a(KeyEnv::BulkImportResult)
+      expect(result.updated).to be >= 1
+
+      # Verify the value was overwritten
+      secret = client.get_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: bulk_keys[0]
+      )
+      expect(secret.value).to eq("overwritten-value")
+    end
+  end
+
+  describe "Multi-Environment" do
+    let(:test_key) { "#{test_prefix}_MULTIENV" }
+    let(:dev_value) { "dev-value-#{SecureRandom.hex(4)}" }
+    let(:staging_value) { "staging-value-#{SecureRandom.hex(4)}" }
+    let(:staging_environment) { "staging" }
+
+    after do
+      # Clean up in both environments
+      [environment, staging_environment].each do |env|
+        begin
+          client.delete_secret(project_id: project_slug, environment: env, key: test_key)
+        rescue KeyEnv::Error
+          # Ignore
+        end
+      end
+    end
+
+    it "isolates secrets across environments" do
+      # Create secret in development
+      client.create_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: test_key,
+        value: dev_value
+      )
+
+      # Create same key in staging
+      client.set_secret(
+        project_id: project_slug,
+        environment: staging_environment,
+        key: test_key,
+        value: staging_value
+      )
+
+      # Verify each environment returns its own value
+      dev_secret = client.get_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: test_key
+      )
+      expect(dev_secret.value).to eq(dev_value)
+
+      staging_secret = client.get_secret(
+        project_id: project_slug,
+        environment: staging_environment,
+        key: test_key
+      )
+      expect(staging_secret.value).to eq(staging_value)
+
+      # Confirm they are in different environments
+      expect(dev_secret.environment_id).not_to eq(staging_secret.environment_id)
+    end
+  end
+
+  describe "Special Characters" do
+    let(:conn_key) { "#{test_prefix}_CONNSTR" }
+    let(:multiline_key) { "#{test_prefix}_MULTILINE" }
+    let(:json_key) { "#{test_prefix}_JSON" }
+
+    let(:connection_string) { "postgresql://user:p@ss@localhost:5432/db?sslmode=require" }
+    let(:multiline_value) { "line1\nline2\nline3" }
+    let(:json_value) { '{"key":"value","nested":{"num":42}}' }
+
+    after do
+      [conn_key, multiline_key, json_key].each do |key|
+        begin
+          client.delete_secret(project_id: project_slug, environment: environment, key: key)
+        rescue KeyEnv::Error
+          # Ignore
+        end
+      end
+    end
+
+    it "handles connection strings, multiline, and JSON values" do
+      # Create secrets with special characters
+      client.create_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: conn_key,
+        value: connection_string
+      )
+      client.create_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: multiline_key,
+        value: multiline_value
+      )
+      client.create_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: json_key,
+        value: json_value
+      )
+
+      # Verify round-trip for connection string
+      secret = client.get_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: conn_key
+      )
+      expect(secret.value).to eq(connection_string)
+
+      # Verify round-trip for multiline value
+      secret = client.get_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: multiline_key
+      )
+      expect(secret.value).to eq(multiline_value)
+
+      # Verify round-trip for JSON value
+      secret = client.get_secret(
+        project_id: project_slug,
+        environment: environment,
+        key: json_key
+      )
+      expect(secret.value).to eq(json_value)
+    end
   end
 
   describe "Secret History" do
