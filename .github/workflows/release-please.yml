@@ -34,7 +34,7 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "VERSION=${{ needs.release-please.outputs.tag_name }}" | sed 's/.*v//' >> $GITHUB_OUTPUT
+        run: echo "VERSION=$(echo '${{ needs.release-please.outputs.tag_name }}' | sed 's/^v//')" >> $GITHUB_OUTPUT
 
       - name: Update version
         run: |
