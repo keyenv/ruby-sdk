@@ -43,7 +43,7 @@ module KeyEnv
     # @return [User] Current user/token info
     def get_current_user
       data = request(:get, "/api/v1/users/me")
-      User.new(data)
+      User.new(data["data"] || data)
     end
 
     # Validate the token and return user info.
@@ -71,7 +71,7 @@ module KeyEnv
     # @return [ProjectWithEnvironments] Project with environments
     def get_project(project_id:)
       data = request(:get, "/api/v1/projects/#{project_id}")
-      ProjectWithEnvironments.new(data)
+      ProjectWithEnvironments.new(data["data"] || data)
     end
 
     # Create a new project.
@@ -81,7 +81,7 @@ module KeyEnv
     # @return [Project] Created project
     def create_project(team_id:, name:)
       data = request(:post, "/api/v1/projects", { team_id: team_id, name: name })
-      Project.new(data)
+      Project.new(data["data"] || data)
     end
 
     # Delete a project.
@@ -115,7 +115,7 @@ module KeyEnv
       payload = { name: name }
       payload[:inherits_from] = inherits_from if inherits_from
       data = request(:post, "/api/v1/projects/#{project_id}/environments", payload)
-      Environment.new(data)
+      Environment.new(data["data"] || data)
     end
 
     # Delete an environment.

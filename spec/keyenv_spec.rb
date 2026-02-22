@@ -31,9 +31,11 @@ RSpec.describe KeyEnv::Client do
   describe "#get_current_user" do
     it "returns user info" do
       stub_keyenv_request(:get, "/api/v1/users/me", response_body: {
-        "id" => "usr_123",
-        "email" => "test@example.com",
-        "name" => "Test User"
+        "data" => {
+          "id" => "usr_123",
+          "email" => "test@example.com",
+          "name" => "Test User"
+        }
       })
 
       user = client.get_current_user
@@ -62,14 +64,16 @@ RSpec.describe KeyEnv::Client do
   describe "#get_project" do
     it "returns project with environments" do
       stub_keyenv_request(:get, "/api/v1/projects/proj_123", response_body: {
-        "id" => "proj_123",
-        "team_id" => "team_1",
-        "name" => "My Project",
-        "slug" => "my-project",
-        "environments" => [
-          { "id" => "env_1", "project_id" => "proj_123", "name" => "development" },
-          { "id" => "env_2", "project_id" => "proj_123", "name" => "production" }
-        ]
+        "data" => {
+          "id" => "proj_123",
+          "team_id" => "team_1",
+          "name" => "My Project",
+          "slug" => "my-project",
+          "environments" => [
+            { "id" => "env_1", "project_id" => "proj_123", "name" => "development" },
+            { "id" => "env_2", "project_id" => "proj_123", "name" => "production" }
+          ]
+        }
       })
 
       project = client.get_project(project_id: "proj_123")
