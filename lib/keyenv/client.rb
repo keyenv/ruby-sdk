@@ -62,7 +62,7 @@ module KeyEnv
     # @return [Array<Project>] List of projects
     def list_projects
       data = request(:get, "/api/v1/projects")
-      (data["projects"] || []).map { |p| Project.new(p) }
+      (data["data"] || []).map { |p| Project.new(p) }
     end
 
     # Get a project by ID.
@@ -102,7 +102,7 @@ module KeyEnv
     # @return [Array<Environment>] List of environments
     def list_environments(project_id:)
       data = request(:get, "/api/v1/projects/#{project_id}/environments")
-      (data["environments"] || []).map { |e| Environment.new(e) }
+      (data["data"] || []).map { |e| Environment.new(e) }
     end
 
     # Create a new environment.
@@ -138,7 +138,7 @@ module KeyEnv
     # @return [Array<Secret>] List of secrets
     def list_secrets(project_id:, environment:)
       data = request(:get, "/api/v1/projects/#{project_id}/environments/#{environment}/secrets")
-      (data["secrets"] || []).map { |s| Secret.new(s) }
+      (data["data"] || []).map { |s| Secret.new(s) }
     end
 
     # Export all secrets with their decrypted values.
@@ -160,7 +160,7 @@ module KeyEnv
       end
 
       data = request(:get, "/api/v1/projects/#{project_id}/environments/#{environment}/secrets/export")
-      secrets = (data["secrets"] || []).map { |s| SecretWithValue.new(s) }
+      secrets = (data["data"] || []).map { |s| SecretWithValue.new(s) }
 
       # Store in cache if TTL > 0
       if @cache_ttl.positive?
@@ -188,7 +188,7 @@ module KeyEnv
     # @return [SecretWithValue] Secret with value
     def get_secret(project_id:, environment:, key:)
       data = request(:get, "/api/v1/projects/#{project_id}/environments/#{environment}/secrets/#{key}")
-      SecretWithValue.new(data["secret"] || data)
+      SecretWithValue.new(data["data"] || data)
     end
 
     # Create a new secret.
@@ -204,7 +204,7 @@ module KeyEnv
       payload[:description] = description if description
       data = request(:post, "/api/v1/projects/#{project_id}/environments/#{environment}/secrets", payload)
       clear_cache(project_id: project_id, environment: environment)
-      Secret.new(data["secret"] || data)
+      Secret.new(data["data"] || data)
     end
 
     # Update a secret's value.
@@ -220,7 +220,7 @@ module KeyEnv
       payload[:description] = description unless description.nil?
       data = request(:put, "/api/v1/projects/#{project_id}/environments/#{environment}/secrets/#{key}", payload)
       clear_cache(project_id: project_id, environment: environment)
-      Secret.new(data["secret"] || data)
+      Secret.new(data["data"] || data)
     end
 
     # Set a secret (create or update).
@@ -256,7 +256,7 @@ module KeyEnv
     # @return [Array<SecretHistory>] Secret version history
     def get_secret_history(project_id:, environment:, key:)
       data = request(:get, "/api/v1/projects/#{project_id}/environments/#{environment}/secrets/#{key}/history")
-      (data["history"] || []).map { |h| SecretHistory.new(h) }
+      (data["data"] || []).map { |h| SecretHistory.new(h) }
     end
 
     # Bulk import secrets.
@@ -274,7 +274,7 @@ module KeyEnv
         { secrets: secret_list, overwrite: overwrite }
       )
       clear_cache(project_id: project_id, environment: environment)
-      BulkImportResult.new(data)
+      BulkImportResult.new(data["data"] || data)
     end
 
     # =========================================================================
@@ -345,7 +345,7 @@ module KeyEnv
     # @return [Array<EnvironmentPermission>] List of permissions
     def list_permissions(project_id:, environment:)
       data = request(:get, "/api/v1/projects/#{project_id}/environments/#{environment}/permissions")
-      (data["permissions"] || []).map { |p| EnvironmentPermission.new(p) }
+      (data["data"] || []).map { |p| EnvironmentPermission.new(p) }
     end
 
     # Set a user's permission for an environment.
@@ -386,7 +386,7 @@ module KeyEnv
         "/api/v1/projects/#{project_id}/environments/#{environment}/permissions",
         { permissions: permissions }
       )
-      (data["permissions"] || []).map { |p| EnvironmentPermission.new(p) }
+      (data["data"] || []).map { |p| EnvironmentPermission.new(p) }
     end
 
     # Get current user's permissions for all environments in a project.
@@ -406,7 +406,7 @@ module KeyEnv
     # @return [Array<ProjectDefault>] List of project defaults
     def get_project_defaults(project_id:)
       data = request(:get, "/api/v1/projects/#{project_id}/permissions/defaults")
-      (data["defaults"] || []).map { |d| ProjectDefault.new(d) }
+      (data["data"] || []).map { |d| ProjectDefault.new(d) }
     end
 
     # Set default permissions for a project.
@@ -420,7 +420,7 @@ module KeyEnv
         "/api/v1/projects/#{project_id}/permissions/defaults",
         { defaults: defaults }
       )
-      (data["defaults"] || []).map { |d| ProjectDefault.new(d) }
+      (data["data"] || []).map { |d| ProjectDefault.new(d) }
     end
 
     private
