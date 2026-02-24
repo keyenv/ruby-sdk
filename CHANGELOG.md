@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4](https://github.com/keyenv/ruby-sdk/compare/v1.2.3...v1.2.4) (2026-02-24)
+
+
+### Bug Fixes
+
+* unwrap data envelope for single-resource API responses ([#5](https://github.com/keyenv/ruby-sdk/issues/5)) ([8303187](https://github.com/keyenv/ruby-sdk/commit/83031875540ffb2cc602059cd98090f0045ec70c))
+
 ## [1.2.3](https://github.com/keyenv/ruby-sdk/compare/v1.2.2...v1.2.3) (2026-02-16)
 
 
