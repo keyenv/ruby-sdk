@@ -48,7 +48,7 @@ RSpec.describe KeyEnv::Client do
   describe "#list_projects" do
     it "returns list of projects" do
       stub_keyenv_request(:get, "/api/v1/projects", response_body: {
-        "projects" => [
+        "data" => [
           { "id" => "proj_1", "team_id" => "team_1", "name" => "Project 1", "slug" => "project-1" },
           { "id" => "proj_2", "team_id" => "team_1", "name" => "Project 2", "slug" => "project-2" }
         ]
@@ -86,7 +86,7 @@ RSpec.describe KeyEnv::Client do
   describe "#export_secrets" do
     it "returns secrets with values" do
       stub_keyenv_request(:get, "/api/v1/projects/proj_123/environments/production/secrets/export", response_body: {
-        "secrets" => [
+        "data" => [
           { "id" => "sec_1", "environment_id" => "env_1", "key" => "DATABASE_URL", "value" => "postgres://localhost/db", "version" => 1 },
           { "id" => "sec_2", "environment_id" => "env_1", "key" => "API_KEY", "value" => "sk_test_123", "version" => 1 }
         ]
@@ -103,7 +103,7 @@ RSpec.describe KeyEnv::Client do
   describe "#export_secrets_as_hash" do
     it "returns secrets as key-value hash" do
       stub_keyenv_request(:get, "/api/v1/projects/proj_123/environments/production/secrets/export", response_body: {
-        "secrets" => [
+        "data" => [
           { "id" => "sec_1", "environment_id" => "env_1", "key" => "DATABASE_URL", "value" => "postgres://localhost/db", "version" => 1 },
           { "id" => "sec_2", "environment_id" => "env_1", "key" => "API_KEY", "value" => "sk_test_123", "version" => 1 }
         ]
@@ -119,7 +119,7 @@ RSpec.describe KeyEnv::Client do
   describe "#get_secret" do
     it "returns single secret with value" do
       stub_keyenv_request(:get, "/api/v1/projects/proj_123/environments/production/secrets/API_KEY", response_body: {
-        "secret" => {
+        "data" => {
           "id" => "sec_1",
           "environment_id" => "env_1",
           "key" => "API_KEY",
@@ -149,7 +149,7 @@ RSpec.describe KeyEnv::Client do
   describe "#create_secret" do
     it "creates a new secret" do
       stub_keyenv_request(:post, "/api/v1/projects/proj_123/environments/development/secrets", response_body: {
-        "secret" => {
+        "data" => {
           "id" => "sec_new",
           "environment_id" => "env_1",
           "key" => "NEW_KEY",
@@ -171,7 +171,7 @@ RSpec.describe KeyEnv::Client do
   describe "#set_secret" do
     it "updates existing secret" do
       stub_keyenv_request(:put, "/api/v1/projects/proj_123/environments/production/secrets/API_KEY", response_body: {
-        "secret" => {
+        "data" => {
           "id" => "sec_1",
           "environment_id" => "env_1",
           "key" => "API_KEY",
@@ -194,7 +194,7 @@ RSpec.describe KeyEnv::Client do
         status: 404
       )
       stub_keyenv_request(:post, "/api/v1/projects/proj_123/environments/production/secrets", response_body: {
-        "secret" => {
+        "data" => {
           "id" => "sec_new",
           "environment_id" => "env_1",
           "key" => "NEW_KEY",
@@ -226,7 +226,7 @@ RSpec.describe KeyEnv::Client do
   describe "#load_env" do
     it "loads secrets into ENV" do
       stub_keyenv_request(:get, "/api/v1/projects/proj_123/environments/production/secrets/export", response_body: {
-        "secrets" => [
+        "data" => [
           { "id" => "sec_1", "environment_id" => "env_1", "key" => "TEST_VAR", "value" => "test_value", "version" => 1 }
         ]
       })
@@ -265,7 +265,7 @@ RSpec.describe KeyEnv::Client do
   describe "#generate_env_file" do
     it "escapes dollar signs in values" do
       stub_keyenv_request(:get, "/api/v1/projects/proj_123/environments/production/secrets/export", response_body: {
-        "secrets" => [
+        "data" => [
           { "id" => "sec_1", "environment_id" => "env_1", "key" => "DOLLAR_VAR", "value" => "price=$100", "version" => 1 },
           { "id" => "sec_2", "environment_id" => "env_1", "key" => "SIMPLE", "value" => "no_special", "version" => 1 }
         ]
@@ -283,7 +283,7 @@ RSpec.describe KeyEnv::Client do
       client2 = KeyEnv.new(token: "token_2", cache_ttl: 300)
 
       stub_keyenv_request(:get, "/api/v1/projects/proj_123/environments/production/secrets/export", response_body: {
-        "secrets" => [
+        "data" => [
           { "id" => "sec_1", "environment_id" => "env_1", "key" => "VAR", "value" => "value1", "version" => 1 }
         ]
       })
@@ -303,7 +303,7 @@ RSpec.describe KeyEnv::Client do
       client_with_cache = KeyEnv.new(token: "test_token", cache_ttl: 300)
 
       stub = stub_keyenv_request(:get, "/api/v1/projects/proj_123/environments/production/secrets/export", response_body: {
-        "secrets" => [
+        "data" => [
           { "id" => "sec_1", "environment_id" => "env_1", "key" => "VAR", "value" => "value", "version" => 1 }
         ]
       })
@@ -318,7 +318,7 @@ RSpec.describe KeyEnv::Client do
 
     it "does not cache when cache_ttl is 0" do
       stub = stub_keyenv_request(:get, "/api/v1/projects/proj_123/environments/production/secrets/export", response_body: {
-        "secrets" => []
+        "data" => []
       })
 
       client.export_secrets(project_id: "proj_123", environment: "production")
